@@ -3,6 +3,17 @@
 import argparse
 from contextlib import contextmanager
 import sys
+import enum
+
+class State(enum.Enum):
+    """
+    State used by the parser
+    """
+    INIT = enum.auto()
+    DESC = enum.auto()
+    EXAMPLE = enum.auto()
+    SCOPE = enum.auto()
+    TARGET = enum.auto()
 
 parser = argparse.ArgumentParser(
     description="Format Paradox script documentations."
@@ -37,5 +48,15 @@ def stream(arg, mode="r", encoding="unicode_escape"):
 args = parser.parse_args()
 
 with stream(args.input) as infile:
+    state = State.INIT
     for line in infile:
-        print(line)
+        match state:
+            case State.INIT:
+                if line == "--------------------\n":
+                    state = State.DESC
+            case State.DESC:
+                if line != "\n":
+                    print(line.split(" - "))
+                    state = State.INIT
+            case _:
+                pass
