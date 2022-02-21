@@ -31,7 +31,18 @@ class Entry:
         """
         set_name_desc is a helper method to set both from the description line.
         """
-        self.name, self.desc = desc_line.split(" - ", maxsplit=1)
+        self.name, self.desc = desc_line.rstrip().split(" - ", maxsplit=1)
+
+    def __str__(self):
+        """
+        ___str__ generates a string representation in wikitext.
+        """
+        return f"""|-
+| {self.name}
+| {self.desc}
+| class="mw-code" | {self.example}
+| {self.scope}
+| {self.target}"""
 
 parser = argparse.ArgumentParser(
     description="Format Paradox script documentations."
@@ -79,13 +90,14 @@ with stream(args.input) as infile:
                     state = State.EXAMPLE
             case State.EXAMPLE:
                 if line.startswith("Supported Scopes: "):
-                    entry.scope = line[len("Supported Scopes: "):]
+                    entry.example = entry.example.rstrip()
+                    entry.scope = line[len("Supported Scopes: "):].rstrip()
                     state = State.SCOPE
                 else:
                     entry.example += line
             case State.SCOPE:
                 if line.startswith("Supported Target: "):
-                    entry.scope = line[len("Supported Target: "):]
+                    entry.scope = line[len("Supported Target: "):].rstrip()
                 state = State.INIT
                 print(entry)
             case _:
