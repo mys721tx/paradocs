@@ -42,7 +42,8 @@ class Entry:
 | {self.desc}
 | class="mw-code" | {self.example}
 | {self.scope}
-| {self.target}"""
+| {self.target}
+"""
 
 parser = argparse.ArgumentParser(
     description="Format Paradox script documentations."
@@ -76,7 +77,7 @@ def stream(arg, mode="r", encoding="unicode_escape"):
 
 args = parser.parse_args()
 
-with stream(args.input) as infile:
+with stream(args.input) as infile, stream(args.output, "w") as outfile:
     state = State.INIT
     entry = Entry()
     for line in infile:
@@ -96,9 +97,10 @@ with stream(args.input) as infile:
                 else:
                     entry.example += line
             case State.SCOPE:
-                if line.startswith("Supported Target: "):
-                    entry.scope = line[len("Supported Target: "):].rstrip()
+                if line.startswith("Supported Targets: "):
+                    entry.target = line[len("Supported Targets: "):].rstrip()
                 state = State.INIT
-                print(entry)
+                outfile.write(str(entry))
+                entry = Entry()
             case _:
                 pass
