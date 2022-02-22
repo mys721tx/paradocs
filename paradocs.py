@@ -14,7 +14,10 @@ class State(enum.Enum):
     DESC = enum.auto()
     EXAMPLE = enum.auto()
     SCOPE = enum.auto()
-    TARGET = enum.auto()
+
+DIVIDER = "--------------------"
+SCOPE = "Supported Scopes: "
+TARGET = "Supported Targets: "
 
 @dataclass
 class Entry:
@@ -40,7 +43,7 @@ class Entry:
         return f"""|-
 | {self.name}
 | {self.desc}
-| class="mw-code" | {self.example}
+| <pre>{self.example}</pre>
 | {self.scope}
 | {self.target}
 """
@@ -83,24 +86,22 @@ with stream(args.input) as infile, stream(args.output, "w") as outfile:
     for line in infile:
         match state:
             case State.INIT:
-                if line == "--------------------\n":
+                if line.rstrip() == DIVIDER:
                     state = State.DESC
             case State.DESC:
                 if line != "\n":
                     entry.set_name_desc(line)
                     state = State.EXAMPLE
             case State.EXAMPLE:
-                if line.startswith("Supported Scopes: "):
+                if line.startswith(SCOPE):
                     entry.example = entry.example.rstrip()
-                    entry.scope = line[len("Supported Scopes: "):].rstrip()
+                    entry.scope = line[len(SCOPE):].rstrip()
                     state = State.SCOPE
                 else:
                     entry.example += line
             case State.SCOPE:
-                if line.startswith("Supported Targets: "):
-                    entry.target = line[len("Supported Targets: "):].rstrip()
+                if line.startswith(TARGET):
+                    entry.target = line[len(TARGET):].rstrip()
                 state = State.INIT
                 outfile.write(str(entry))
                 entry = Entry()
-            case _:
-                pass
